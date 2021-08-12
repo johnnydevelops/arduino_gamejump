@@ -5,7 +5,13 @@
  Created by Johnny_11
  Help from @schmitzoide
 
- Version 1.0
+ Version 1.1
+
+ Changelog:
+ =v1.1
+ Added buzzer sound
+ Added debug button for buzzer
+ Fixed restart while playing bug
 
  (Uses LCD1602 screen)
 
@@ -23,6 +29,8 @@
 #define waitfor 100
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define PIN_BUZZER 2
+#define PIN_BUTTON 4
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 
@@ -54,6 +62,9 @@ void setup() {
   // LCD
   
   // Wire up everything
+
+  pinMode(PIN_BUZZER, OUTPUT);
+  pinMode(PIN_BUTTON, INPUT);
   
   Wire.begin(SDA, SCL);
   lcd.init();
@@ -105,6 +116,15 @@ void gameOverScreenInit(String output) {
   lcd.setCursor(0,1);
   lcd.print("Score: ");
   lcd.print(obsPassed);
+  digitalWrite(PIN_BUZZER,HIGH);
+  delay(250);
+  digitalWrite(PIN_BUZZER,LOW);
+  if (output == "WIN") {
+    delay(100);
+    digitalWrite(PIN_BUZZER,HIGH);
+    delay(500);
+    digitalWrite(PIN_BUZZER,LOW);
+  }
 }
 
 void checkCollision() {
@@ -156,6 +176,9 @@ void obstacle() {
     // Reset position after passed
     
     obsPassed = obsPassed + 1;
+    digitalWrite(PIN_BUZZER,HIGH);
+    delay(10);
+    digitalWrite(PIN_BUZZER,LOW);
     obsPos = 15;
     lcd.setCursor(posC,posR);
     lcd.print(manS);
@@ -192,6 +215,12 @@ void loop() {
   int yVal = analogRead(xyzPins[1]) / 4095.0 * 2 - 1;
   int zVal = !digitalRead(xyzPins[2]);
   // Game
+
+  if (digitalRead(PIN_BUTTON) == LOW) {
+    digitalWrite(PIN_BUZZER,HIGH);
+  }else{
+    digitalWrite(PIN_BUZZER,LOW);
+  }
   
   if (gameOver == false) {
     
@@ -205,10 +234,12 @@ void loop() {
      delay(waitfor);
   }
   if (zVal == 1) {
+    if (gameOver == true) {
+      
+      // if joystick button pressed, restart
     
-    // if joystick button pressed, restart
-    
-    Serial.println(zVal);
-    restart();
+      Serial.println(zVal);
+      restart();
+    }
   }
 }
